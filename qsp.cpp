@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "variables.h"
 #include <PPMReader.h>
+#include "lora.h"
 
 void qspDecodeRcDataFrame(QspConfiguration_t *qsp, RxDeviceState_t *rxDeviceSate) {
     int temporaryPpmOutput[PPM_OUTPUT_CHANNEL_COUNT] = {0};
@@ -234,22 +235,61 @@ void qspEncodeFrame(QspConfiguration_t *qsp) {
     //Zero CRC
     qsp->crc = 0;
 
-    //Write CHANNEL_ID
-    qsp->hardwareWriteFunction(CHANNEL_ID, qsp);
+    byte buffer[qsp->payloadLength + 3];
 
+    qspComputeCrc(qsp, CHANNEL_ID);
+    buffer[0] = CHANNEL_ID;
+    
     //Write frame type and length
     uint8_t data = qsp->payloadLength & 0x0f;
     data |= (qsp->frameToSend << 4) & 0xf0;
-    qsp->hardwareWriteFunction(data, qsp);
 
-    //Write payload
+    qspComputeCrc(qsp, data);
+    buffer[1] = data;
+
     for (uint8_t i = 0; i < qsp->payloadLength; i++)
     {
-        qsp->hardwareWriteFunction(qsp->payload[i], qsp);
+        qspComputeCrc(qsp, qsp->payload[i]);
+        buffer[i + 2] = qsp->payload[i];
+        // qsp->hardwareWriteFunction(qsp->payload[i], qsp);
     }
 
+    buffer[qsp->payloadLength + 2] = qsp->crc;
+
+    LoRa.write(buffer, qsp->payloadLength + 3);
+
+    // LoRa.bufferTransfer(0x00 | 0x80, buffer);
+
+    // for (uint8_t i = 0; i < sizeof(buffer); i ++) {
+    //     Serial.println(buffer[i]);
+    // }
+    // delay(5000);
+
+    // Serial.println(buffer);
+
+    /*
+    //Compute CRC
+    qspComputeCrc(qsp, dataByte);
+    //Write to radio
+    LoRa.write(dataByte);
+    */
+
+    //Write CHANNEL_ID
+    // qsp->hardwareWriteFunction(CHANNEL_ID, qsp);
+
+    // //Write frame type and length
+    // uint8_t data = qsp->payloadLength & 0x0f;
+    // data |= (qsp->frameToSend << 4) & 0xf0;
+    // qsp->hardwareWriteFunction(data, qsp);
+
+    //Write payload
+    // for (uint8_t i = 0; i < qsp->payloadLength; i++)
+    // {
+    //     qsp->hardwareWriteFunction(qsp->payload[i], qsp);
+    // }
+
     //Finally write CRC
-    qsp->hardwareWriteFunction(qsp->crc, qsp);
+    // qsp->hardwareWriteFunction(qsp->crc, qsp);
 }
 
 void encodePingPayload(QspConfiguration_t *qsp, uint32_t currentMicros) {

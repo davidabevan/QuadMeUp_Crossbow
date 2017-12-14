@@ -31,7 +31,7 @@ public:
   float packetSnr();
 
   size_t write(uint8_t byte);
-  size_t write(const uint8_t *buffer, size_t size);
+  size_t write(uint8_t buffer[], uint8_t size);
   int available();
   int read();
   int fastRead();
@@ -58,6 +58,7 @@ public:
   void setSPIFrequency(uint32_t frequency);
 
   void dumpRegisters(Stream& out);
+  void bufferTransfer(uint8_t address, uint8_t buffer[], uint8_t size);
 
 private:
   void explicitHeaderMode();

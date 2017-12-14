@@ -2,7 +2,7 @@
 // #define DEVICE_MODE_RX
 
 // #define FEATURE_TX_OLED
-#define FORCE_TX_WITHOUT_INPUT
+// #define FORCE_TX_WITHOUT_INPUT
 
 #define DEBUG_SERIAL
 // #define DEBUG_PING_PONG
@@ -122,7 +122,6 @@ void onQspSuccess(QspConfiguration_t *qsp, TxDeviceState_t *txDeviceState, RxDev
 }
 
 void onQspFailure(QspConfiguration_t *qsp, TxDeviceState_t *txDeviceState, RxDeviceState_t *rxDeviceState, RadioState_t *radioState) {
-
 }
 
 void setup(void)
@@ -267,7 +266,10 @@ void loop(void)
     if (radioState.bytesToRead != NO_DATA_TO_READ) {
 
         for (int i = 0; i < radioState.bytesToRead; i++) {
-            qspDecodeIncomingFrame(&qsp, LoRa.fastRead(), &rxDeviceState, &txDeviceState, &radioState);            
+
+            Serial.println(LoRa.fastRead());
+
+            // qspDecodeIncomingFrame(&qsp, LoRa.fastRead(), &rxDeviceState, &txDeviceState, &radioState);            
         }
         radioState.rssi = getRadioRssi();
         radioState.snr = getRadioSnr();
@@ -312,6 +314,7 @@ void loop(void)
         }
     #endif
 
+        // frameToSend = -1;
         if (frameToSend > -1) {
 
             qsp.frameToSend = frameToSend;
@@ -397,12 +400,14 @@ void loop(void)
 
     if (qsp.canTransmit && transmitPayload)
     {
+        // Serial1.end();
         LoRa.beginPacket();
-        qspEncodeFrame(&qsp);
+        // qspEncodeFrame(&qsp);
         LoRa.endPacket();
         //After ending packet, put device into receive mode again
-        LoRa.receive();
+        // LoRa.receive();
         transmitPayload = false;
+        // Serial1.begin(100000, SERIAL_8N2);
     }
 
 #ifdef DEVICE_MODE_TX

@@ -213,7 +213,7 @@ size_t LoRaClass::write(uint8_t byte)
   return write(&byte, sizeof(byte));
 }
 
-size_t LoRaClass::write(const uint8_t *buffer, size_t size)
+size_t LoRaClass::write(uint8_t buffer[], uint8_t size)
 {
   int currentLength = readRegister(REG_PAYLOAD_LENGTH);
 
@@ -222,10 +222,11 @@ size_t LoRaClass::write(const uint8_t *buffer, size_t size)
     size = MAX_PKT_LENGTH - currentLength;
   }
 
-  // write data
-  for (size_t i = 0; i < size; i++) {
-    writeRegister(REG_FIFO, buffer[i]);
+  for (uint8_t i = 0; i < size; i ++) {
+    Serial.println(buffer[i]);
   }
+
+  bufferTransfer(REG_FIFO | 0x80, buffer, size);
 
   // update length
   writeRegister(REG_PAYLOAD_LENGTH, currentLength + size);
@@ -496,6 +497,28 @@ uint8_t LoRaClass::singleTransfer(uint8_t address, uint8_t value)
   digitalWrite(_ss, HIGH);
 
   return response;
+}
+
+void LoRaClass::bufferTransfer(uint8_t address, uint8_t buffer[], uint8_t size)
+{
+  uint8_t response;
+
+  digitalWrite(_ss, LOW);
+
+  for (uint8_t i = 0; i < size; i ++) {
+    Serial.println(buffer[i]);
+}
+
+  SPI.beginTransaction(_spiSettings);
+  SPI.transfer(address);
+  SPI.transfer(buffer, size);
+  SPI.endTransaction();
+
+  
+
+  digitalWrite(_ss, HIGH);
+
+  // return response;
 }
 
 void LoRaClass::onDio0Rise()
